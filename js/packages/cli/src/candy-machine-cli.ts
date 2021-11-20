@@ -58,6 +58,7 @@ programCommand('upload')
     },
   )
   .option('-n, --number <number>', 'Number of images to upload')
+  .option('-b, --batchSize <number>', 'Batch size - defaults to 1000')
   .option(
     '-s, --storage <string>',
     'Database to use for storage (arweave, ipfs, aws)',
@@ -94,6 +95,7 @@ programCommand('upload')
       retainAuthority,
       mutable,
       rpcUrl,
+      batchSize,
     } = cmd.opts();
 
     if (storage === 'ipfs' && (!ipfsInfuraProjectId || !ipfsInfuraSecret)) {
@@ -156,6 +158,7 @@ programCommand('upload')
         rpcUrl,
         ipfsCredentials,
         awsS3Bucket,
+        batchSize,
       );
 
       if (successful) {
@@ -237,18 +240,20 @@ programCommand('withdraw')
       );
       for (const cg of configs) {
         try {
-          const tx = await withdraw(
-            anchorProgram,
-            walletKeyPair,
-            env,
-            new PublicKey(cg.pubkey),
-            cg.account.lamports,
-            charityPub,
-            cpf,
-          );
-          log.info(
-            `${cg.pubkey} has been withdrawn. \nTransaction Signarure: ${tx}`,
-          );
+          if (cg.account.lamports > 0) {
+            const tx = await withdraw(
+              anchorProgram,
+              walletKeyPair,
+              env,
+              new PublicKey(cg.pubkey),
+              cg.account.lamports,
+              charityPub,
+              cpf,
+            );
+            log.info(
+              `${cg.pubkey} has been withdrawn. \nTransaction Signarure: ${tx}`,
+            );
+          }
         } catch (e) {
           log.error(
             `Withdraw has failed for config account ${cg.pubkey} Error: ${e.message}`,
